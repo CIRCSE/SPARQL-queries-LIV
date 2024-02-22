@@ -1,0 +1,16 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>
+PREFIX lime: <http://www.w3.org/ns/lemon/lime#>
+PREFIX lila: <http://lila-erc.eu/ontologies/lila/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+#count the number of verbal lemmas derived from PIE and listed in the LIV per inflection type
+
+SELECT ?inflectiontypelabel (COUNT (DISTINCT ?lemma) as ?countlemma) WHERE {
+   <http://lila-erc.eu/data/lexicalResources/LIV/Lexicon> lime:entry ?lexentry.
+  ?lexentry ontolex:canonicalForm ?lemma.
+  ?lemma rdf:type lila:Lemma;
+  		lila:hasInflectionType ?inflectiontype.
+   FILTER regex(?inflectiontype, "v")
+  ?inflectiontype rdfs:label ?inflectiontypelabel.
+} ORDER BY DESC(?countlemma)

@@ -1,0 +1,62 @@
+PREFIX lemonEty: <http://lari-datasets.ilc.cnr.it/lemonEty#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>
+PREFIX lime: <http://www.w3.org/ns/lemon/lime#>
+PREFIX lila: <http://lila-erc.eu/ontologies/lila/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>
+PREFIX prinparlat: <http://lila-erc.eu/ontologies/prinparlat/>
+
+#count the number of derivative lemmas featuring a certain affix
+
+SELECT ?suffixlabel (COUNT( DISTINCT ?secondarylemma) as ?secondarylemmacount) WHERE {
+ 
+<http://lila-erc.eu/data/lexicalResources/LIV/Lexicon> lime:entry ?livlexentry.
+ ?livlexentry ontolex:canonicalForm ?lemma;
+ vartrans:lexicalRel ?latstem.
+?etylink lemonEty:etyTarget ?latstem;
+ lemonEty:etySource ?piestem.
+?piestem prinparlat:stemType ?piestemtype.
+
+#restrict the results just to lemmas descending from fientive stems
+
+VALUES ?piestemtype {<http://lila-erc.eu/data/lexicalResources/LIV/id/LexicalEntry/id/Stems/fientive_stem>}
+
+#exclude the lemmas descending from the innovative stems
+
+ FILTER NOT EXISTS { ?etylink lemonEty:etySource <http://lila-erc.eu/data/lexicalResources/LIV/id/Themes/->}
+
+ ?lemma lila:hasBase ?base.
+  ?secondarylemma lila:hasBase ?base.
+  ?secondarylemma lila:hasSuffix ?suffix.
+  ?suffix rdfs:label ?suffixlabel.
+
+#restrict the results just to Classical Latin lemmas 
+  
+  BIND(xsd:integer(STRAFTER(STR(?secondarylemma), "http://lila-erc.eu/data/id/lemma/")) AS ?lemmaNumber)
+  
+    FILTER NOT EXISTS { ?secondarylemma rdf:type lila:Lemma. 
+
+  
+  FILTER (
+   (?lemmaNumber >= 1 && ?lemmaNumber <= 86822) ||
+    (?lemmaNumber >= 131479 && ?lemmaNumber <= 135661)
+  )
+    }
+FILTER (
+    STR(?secondarylemma) NOT IN (
+    "http://lila-erc.eu/data/id/lemma/156423",
+     "http://lila-erc.eu/data/id/lemma/156422",
+      "http://lila-erc.eu/data/id/lemma/156421",
+      "http://lila-erc.eu/data/id/lemma/156420",
+      "http://lila-erc.eu/data/id/lemma/135916",
+      "http://lila-erc.eu/data/id/lemma/135915",
+      "http://lila-erc.eu/data/id/lemma/135914",
+      "http://lila-erc.eu/data/id/lemma/135913",
+      "http://lila-erc.eu/data/id/lemma/135912"
+    )
+)
+  
+  
+} GROUP BY ?suffixlabel ?secondarylemmacount ORDER BY DESC (?secondarylemmacount)
